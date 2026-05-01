@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="StudentHub - A modern student management system for managing student records with ease.">
     <title>Student Management System</title>
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,6 +14,8 @@
 
 <?php
     include 'includes/db.php';
+    $students = getStudents();
+    $totalStudents = count($students);
 ?>
 
     <!-- Top Navigation Bar -->
@@ -22,16 +25,16 @@
             <span class="brand-text">StudentHub</span>
         </div>
         <div class="nav-links">
-            <button class="navbarbuttons" onclick="showSection('create')">
+            <button class="navbarbuttons" onclick="showSection('create')" title="Press 1">
                 <span class="btn-icon">&#10010;</span> Create
             </button>
-            <button class="navbarbuttons" onclick="showSection('read')">
+            <button class="navbarbuttons" onclick="showSection('read')" title="Press 2">
                 <span class="btn-icon">&#9783;</span> Read
             </button>
-            <button class="navbarbuttons" onclick="showSection('update')">
+            <button class="navbarbuttons" onclick="showSection('update')" title="Press 3">
                 <span class="btn-icon">&#9998;</span> Update
             </button>
-            <button class="navbarbuttons btn-danger" onclick="showSection('delete')">
+            <button class="navbarbuttons btn-danger" onclick="showSection('delete')" title="Press 4">
                 <span class="btn-icon">&#10006;</span> Delete
             </button>
         </div>
@@ -47,12 +50,15 @@
                 <h1 class="splash-title">Student Management System</h1>
                 <p class="splash-subtitle">A Project in Integrative Programming Technologies</p>
                 <div class="home-divider"></div>
+
+                <!-- Greeting & Clock -->
+                <div class="greeting-area">
+                    <p class="greeting-text" id="greeting-text"></p>
+                    <p class="live-clock" id="live-clock"></p>
+                </div>
+
                 <p class="splash-desc">Manage student records with ease. Use the navigation above to Create, Read, Update, or Delete student entries.</p>
                 <div class="home-stats">
-                    <?php
-                        $students = getStudents();
-                        $totalStudents = count($students);
-                    ?>
                     <div class="stat-item">
                         <span class="stat-number"><?php echo $totalStudents; ?></span>
                         <span class="stat-label">Total Students</span>
@@ -61,7 +67,38 @@
                         <span class="stat-number">4</span>
                         <span class="stat-label">Operations</span>
                     </div>
+                    <div class="stat-item">
+                        <span class="stat-number"><?php
+                            $courses = [];
+                            foreach ($students as $s) {
+                                if (!empty($s['course'])) $courses[$s['course']] = true;
+                            }
+                            echo count($courses);
+                        ?></span>
+                        <span class="stat-label">Courses</span>
+                    </div>
                 </div>
+
+                <!-- Recently Added Students -->
+                <?php if ($totalStudents > 0): ?>
+                <div class="recent-students">
+                    <h3 class="recent-title">&#128203; Recently Added</h3>
+                    <div class="recent-list">
+                        <?php
+                            $recent = array_slice(array_reverse($students), 0, 5);
+                            foreach ($recent as $r):
+                        ?>
+                        <div class="recent-item">
+                            <div class="recent-avatar"><?php echo strtoupper(substr($r['name'] ?? '?', 0, 1)); ?></div>
+                            <div class="recent-info">
+                                <span class="recent-name"><?php echo htmlspecialchars($r['surname'] . ', ' . $r['name']); ?></span>
+                                <span class="recent-meta"><?php echo htmlspecialchars(($r['course'] ?? 'N/A') . ' • ' . ($r['year_level'] ?? '')); ?></span>
+                            </div>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+                <?php endif; ?>
             </div>
 
             <!-- Troll Area -->
@@ -79,20 +116,57 @@
                     <h1 class="contenttitle">Insert New Student</h1>
                 </div>
 
-                <form action="includes/insert.php" method="POST">
-                    <div class="form-group">
-                        <label for="surname" class="label">Surname</label>
-                        <input type="text" name="surname" id="surname" class="field" placeholder="Enter surname" required>
+                <form action="includes/insert.php" method="POST" id="createForm" novalidate>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="surname" class="label">Surname <span class="required">*</span></label>
+                            <input type="text" name="surname" id="surname" class="field" placeholder="Enter surname" required>
+                            <span class="field-error" id="err-surname"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="name" class="label">First Name <span class="required">*</span></label>
+                            <input type="text" name="name" id="name" class="field" placeholder="Enter first name" required>
+                            <span class="field-error" id="err-name"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="middlename" class="label">Middle Name</label>
+                            <input type="text" name="middlename" id="middlename" class="field" placeholder="Enter middle name">
+                        </div>
+                        <div class="form-group">
+                            <label for="gender" class="label">Gender</label>
+                            <select name="gender" id="gender" class="field">
+                                <option value="">Select gender</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="name" class="label">Name</label>
-                        <input type="text" name="name" id="name" class="field" placeholder="Enter first name" required>
+                        <label for="email" class="label">Email</label>
+                        <input type="email" name="email" id="email" class="field" placeholder="Enter email address">
+                        <span class="field-error" id="err-email"></span>
                     </div>
 
-                    <div class="form-group">
-                        <label for="middlename" class="label">Middle Name</label>
-                        <input type="text" name="middlename" id="middlename" class="field" placeholder="Enter middle name">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="course" class="label">Course / Section</label>
+                            <input type="text" name="course" id="course" class="field" placeholder="e.g. BSIT, BSCS">
+                        </div>
+                        <div class="form-group">
+                            <label for="year_level" class="label">Year Level</label>
+                            <select name="year_level" id="year_level" class="field">
+                                <option value="">Select year</option>
+                                <option value="1st Year">1st Year</option>
+                                <option value="2nd Year">2nd Year</option>
+                                <option value="3rd Year">3rd Year</option>
+                                <option value="4th Year">4th Year</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -102,7 +176,8 @@
 
                     <div class="form-group">
                         <label for="contact" class="label">Mobile Number</label>
-                        <input type="text" name="contact" id="contact" class="field" placeholder="Enter mobile number">
+                        <input type="text" name="contact" id="contact" class="field" placeholder="e.g. 09123456789" maxlength="11">
+                        <span class="field-error" id="err-contact"></span>
                     </div>
 
                     <div id="btncontainer">
@@ -119,41 +194,70 @@
                 <div class="card-header">
                     <span class="card-icon">&#9783;</span>
                     <h1 class="contenttitle">View Students</h1>
+                    <span class="record-count" id="record-count"><?php echo $totalStudents; ?> record<?php echo $totalStudents !== 1 ? 's' : ''; ?></span>
+                </div>
+
+                <!-- Search & Export Bar -->
+                <div class="table-toolbar">
+                    <div class="search-box">
+                        <span class="search-icon">&#128269;</span>
+                        <input type="text" id="table-search" class="search-input" placeholder="Search students by name, course, email...">
+                    </div>
+                    <a href="includes/export.php" class="btns btn-export" id="export-btn" title="Export to CSV">
+                        &#128229; Export CSV
+                    </a>
                 </div>
 
                 <div class="table-wrapper">
-                    <table class="student-table">
+                    <table class="student-table" id="student-table">
                         <thead>
                             <tr>
                                 <th>ID</th>
                                 <th>Surname</th>
                                 <th>Name</th>
                                 <th>Middle Name</th>
+                                <th>Email</th>
+                                <th>Gender</th>
+                                <th>Course</th>
+                                <th>Year</th>
                                 <th>Address</th>
-                                <th>Contact Number</th>
+                                <th>Contact</th>
+                                <th>Enrolled</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php
-                                $students = getStudents();
-
                                 if (count($students) > 0) {
-                                    foreach ($students as $row) {
-                                        echo "<tr>";
+                                    foreach ($students as $index => $row) {
+                                        echo "<tr class='table-row-anim' style='animation-delay: " . ($index * 0.05) . "s'>";
                                         echo "<td>" . $row['id'] . "</td>";
                                         echo "<td>" . htmlspecialchars($row['surname']) . "</td>";
                                         echo "<td>" . htmlspecialchars($row['name']) . "</td>";
-                                        echo "<td>" . htmlspecialchars($row['middlename']) . "</td>";
-                                        echo "<td>" . htmlspecialchars($row['address']) . "</td>";
-                                        echo "<td>" . htmlspecialchars($row['contact_number']) . "</td>";
+                                        echo "<td>" . htmlspecialchars($row['middlename'] ?? '') . "</td>";
+                                        echo "<td>" . htmlspecialchars($row['email'] ?? '') . "</td>";
+                                        echo "<td>" . htmlspecialchars($row['gender'] ?? '') . "</td>";
+                                        echo "<td>" . htmlspecialchars($row['course'] ?? '') . "</td>";
+                                        echo "<td>" . htmlspecialchars($row['year_level'] ?? '') . "</td>";
+                                        echo "<td>" . htmlspecialchars($row['address'] ?? '') . "</td>";
+                                        echo "<td>" . htmlspecialchars($row['contact_number'] ?? '') . "</td>";
+                                        echo "<td>" . htmlspecialchars($row['enrollment_date'] ?? '') . "</td>";
                                         echo "</tr>";
                                     }
                                 } else {
-                                    echo "<tr><td colspan='6' class='empty-row'>No records found</td></tr>";
+                                    echo "<tr><td colspan='11' class='empty-row'>
+                                        <div class='empty-state'>
+                                            <span class='empty-icon'>&#128203;</span>
+                                            <p>No student records found</p>
+                                            <span class='empty-hint'>Start by adding a student using the Create section</span>
+                                        </div>
+                                    </td></tr>";
                                 }
                             ?>
                         </tbody>
                     </table>
+                </div>
+                <div class="table-footer" id="table-footer">
+                    <span id="filter-count"></span>
                 </div>
             </div>
         </section>
@@ -177,7 +281,6 @@
                 <?php
                 if (isset($_POST['search_update'])) {
                     $search_id = intval($_POST['search_id']);
-                    $students = getStudents();
                     $student = null;
                     foreach ($students as $s) {
                         if ($s['id'] == $search_id) {
@@ -189,32 +292,68 @@
                     if ($student !== null) {
                 ?>
                 <div class="divider"></div>
-                <form action="includes/update.php" method="POST">
+                <form action="includes/update.php" method="POST" id="updateForm" novalidate>
                     <input type="hidden" name="id" value="<?php echo $student['id']; ?>">
 
-                    <div class="form-group">
-                        <label for="update_surname" class="label">Surname</label>
-                        <input type="text" name="surname" id="update_surname" class="field" value="<?php echo htmlspecialchars($student['surname']); ?>" required>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="update_surname" class="label">Surname <span class="required">*</span></label>
+                            <input type="text" name="surname" id="update_surname" class="field" value="<?php echo htmlspecialchars($student['surname']); ?>" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="update_name" class="label">First Name <span class="required">*</span></label>
+                            <input type="text" name="name" id="update_name" class="field" value="<?php echo htmlspecialchars($student['name']); ?>" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="update_middlename" class="label">Middle Name</label>
+                            <input type="text" name="middlename" id="update_middlename" class="field" value="<?php echo htmlspecialchars($student['middlename'] ?? ''); ?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="update_gender" class="label">Gender</label>
+                            <select name="gender" id="update_gender" class="field">
+                                <option value="">Select gender</option>
+                                <option value="Male" <?php echo ($student['gender'] ?? '') === 'Male' ? 'selected' : ''; ?>>Male</option>
+                                <option value="Female" <?php echo ($student['gender'] ?? '') === 'Female' ? 'selected' : ''; ?>>Female</option>
+                                <option value="Other" <?php echo ($student['gender'] ?? '') === 'Other' ? 'selected' : ''; ?>>Other</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="update_name" class="label">Name</label>
-                        <input type="text" name="name" id="update_name" class="field" value="<?php echo htmlspecialchars($student['name']); ?>" required>
+                        <label for="update_email" class="label">Email</label>
+                        <input type="email" name="email" id="update_email" class="field" value="<?php echo htmlspecialchars($student['email'] ?? ''); ?>">
+                        <span class="field-error" id="err-update-email"></span>
                     </div>
 
-                    <div class="form-group">
-                        <label for="update_middlename" class="label">Middle Name</label>
-                        <input type="text" name="middlename" id="update_middlename" class="field" value="<?php echo htmlspecialchars($student['middlename']); ?>">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="update_course" class="label">Course / Section</label>
+                            <input type="text" name="course" id="update_course" class="field" value="<?php echo htmlspecialchars($student['course'] ?? ''); ?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="update_year_level" class="label">Year Level</label>
+                            <select name="year_level" id="update_year_level" class="field">
+                                <option value="">Select year</option>
+                                <option value="1st Year" <?php echo ($student['year_level'] ?? '') === '1st Year' ? 'selected' : ''; ?>>1st Year</option>
+                                <option value="2nd Year" <?php echo ($student['year_level'] ?? '') === '2nd Year' ? 'selected' : ''; ?>>2nd Year</option>
+                                <option value="3rd Year" <?php echo ($student['year_level'] ?? '') === '3rd Year' ? 'selected' : ''; ?>>3rd Year</option>
+                                <option value="4th Year" <?php echo ($student['year_level'] ?? '') === '4th Year' ? 'selected' : ''; ?>>4th Year</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="form-group">
                         <label for="update_address" class="label">Address</label>
-                        <input type="text" name="address" id="update_address" class="field" value="<?php echo htmlspecialchars($student['address']); ?>">
+                        <input type="text" name="address" id="update_address" class="field" value="<?php echo htmlspecialchars($student['address'] ?? ''); ?>">
                     </div>
 
                     <div class="form-group">
                         <label for="update_contact" class="label">Mobile Number</label>
-                        <input type="text" name="contact" id="update_contact" class="field" value="<?php echo htmlspecialchars($student['contact_number']); ?>">
+                        <input type="text" name="contact" id="update_contact" class="field" value="<?php echo htmlspecialchars($student['contact_number'] ?? ''); ?>" maxlength="11">
+                        <span class="field-error" id="err-update-contact"></span>
                     </div>
 
                     <div id="btncontainer">
@@ -224,7 +363,7 @@
                 </form>
                 <?php
                     } else {
-                        echo "<div class='alert alert-error'>No student found with ID: $search_id</div>";
+                        echo "<div class='alert alert-error'>&#9888; No student found with ID: $search_id</div>";
                     }
                 }
                 ?>
@@ -250,7 +389,6 @@
                 <?php
                 if (isset($_POST['search_delete'])) {
                     $search_id = intval($_POST['delete_search_id']);
-                    $students = getStudents();
                     $student = null;
                     foreach ($students as $s) {
                         if ($s['id'] == $search_id) {
@@ -279,28 +417,50 @@
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">Middle Name</span>
-                            <span class="detail-value"><?php echo htmlspecialchars($student['middlename']); ?></span>
+                            <span class="detail-value"><?php echo htmlspecialchars($student['middlename'] ?? ''); ?></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Email</span>
+                            <span class="detail-value"><?php echo htmlspecialchars($student['email'] ?? 'N/A'); ?></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Gender</span>
+                            <span class="detail-value"><?php echo htmlspecialchars($student['gender'] ?? 'N/A'); ?></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Course</span>
+                            <span class="detail-value"><?php echo htmlspecialchars($student['course'] ?? 'N/A'); ?></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Year Level</span>
+                            <span class="detail-value"><?php echo htmlspecialchars($student['year_level'] ?? 'N/A'); ?></span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">Address</span>
-                            <span class="detail-value"><?php echo htmlspecialchars($student['address']); ?></span>
+                            <span class="detail-value"><?php echo htmlspecialchars($student['address'] ?? ''); ?></span>
                         </div>
                         <div class="detail-item">
                             <span class="detail-label">Contact</span>
-                            <span class="detail-value"><?php echo htmlspecialchars($student['contact_number']); ?></span>
+                            <span class="detail-value"><?php echo htmlspecialchars($student['contact_number'] ?? ''); ?></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Enrolled</span>
+                            <span class="detail-value"><?php echo htmlspecialchars($student['enrollment_date'] ?? 'N/A'); ?></span>
                         </div>
                     </div>
                 </div>
 
-                <form action="includes/delete.php" method="POST" id="deleteForm">
+                <button type="button" class="btns btn-delete" onclick="showDeleteModal(<?php echo $student['id']; ?>, '<?php echo htmlspecialchars(addslashes($student['surname'] . ', ' . $student['name'])); ?>')">
+                    &#128465; Delete Student
+                </button>
+
+                <!-- Hidden delete form (submitted by modal confirm) -->
+                <form action="includes/delete.php" method="POST" id="deleteForm" style="display:none;">
                     <input type="hidden" name="id" value="<?php echo $student['id']; ?>">
-                    <button type="submit" class="btns btn-delete" formnovalidate>
-                        &#128465; Delete Student
-                    </button>
                 </form>
                 <?php
                     } else {
-                        echo "<div class='alert alert-error'>No student found with ID: $search_id</div>";
+                        echo "<div class='alert alert-error'>&#9888; No student found with ID: $search_id</div>";
                     }
                 }
                 ?>
@@ -308,6 +468,19 @@
         </section>
 
     </main>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal-overlay" id="delete-modal" style="display:none;">
+        <div class="modal-card">
+            <div class="modal-icon">&#9888;</div>
+            <h2 class="modal-title">Confirm Deletion</h2>
+            <p class="modal-body">Are you sure you want to delete <strong id="modal-student-name"></strong>? This action cannot be undone.</p>
+            <div class="modal-actions">
+                <button class="btns btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+                <button class="btns btn-delete-confirm" onclick="confirmDelete()">&#128465; Delete</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Toast Notifications -->
     <div id="success-toast" class="toast toast-hidden toast-success">
@@ -319,6 +492,20 @@
     <div id="delete-toast" class="toast toast-hidden toast-success">
         &#10004; Record Deleted Successfully!
     </div>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <span class="footer-logo">&#127891;</span>
+                <span class="footer-name">StudentHub</span>
+            </div>
+            <p class="footer-text">A Project in Integrative Programming Technologies</p>
+            <div class="footer-divider"></div>
+            <p class="footer-copy">&copy; <?php echo date('Y'); ?> StudentHub. All rights reserved.</p>
+            <p class="footer-keys">Keyboard shortcuts: <kbd>1</kbd> Create &nbsp; <kbd>2</kbd> Read &nbsp; <kbd>3</kbd> Update &nbsp; <kbd>4</kbd> Delete &nbsp; <kbd>H</kbd> Home</p>
+        </div>
+    </footer>
 
     <script src="script.js?v=<?php echo time(); ?>"></script>
     <?php if (isset($_POST['search_update'])): ?>
