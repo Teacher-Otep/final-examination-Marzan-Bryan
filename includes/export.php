@@ -3,11 +3,11 @@ include 'db.php';
 
 $students = getStudents();
 
-// Set headers for CSV download
+// header for CSV download
 header('Content-Type: text/csv; charset=utf-8');
 header('Content-Disposition: attachment; filename=students_export_' . date('Y-m-d_His') . '.csv');
 
-// Open output stream
+// pang ipen ng output stream
 $output = fopen('php://output', 'w');
 
 // Write CSV header row
