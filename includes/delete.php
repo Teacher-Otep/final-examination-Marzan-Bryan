@@ -7,7 +7,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $students = getStudents();
     $initial_count = count($students);
 
-    // Filter out ung student sa matching id
     $students = array_filter($students, function($student) use ($id) {
         return $student['id'] != $id;
     });
