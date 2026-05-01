@@ -12,6 +12,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $students = getStudents();
     $updated = false;
 
+
     foreach ($students as &$student) {
         if ($student['id'] == $id) {
             $student['name'] = $name;
